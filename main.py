@@ -4,7 +4,25 @@ import webbrowser
 import copy
 import json
 from dataclasses import dataclass, field
+class account:
+    def __init__(self, cookie=""):
+        self.cookie = cookie
+        self.headers = {
+            "Accept": "application/json, text/plain",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Cookie": self.cookie
+        }
 
+    def set_cookie(self, cookie):
+        self.cookie = cookie
+        self.headers = {
+            "Accept": "application/json, text/plain",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Cookie": self.cookie
+        }
+
+    def request_with_account(self, endpoint):
+        return requests.get(url=endpoint, headers=self.headers)
 
 @dataclass
 class toky:
@@ -31,6 +49,18 @@ class toky:
         except json.JSONDecodeError:
             pass
 
+    def print_questons(self):
+        print(json.dumps(self.questions, indent=4))
+
+    def print_brandcategory_endpoint(self, endpoint):
+        r = requests.get(f"https://www.tokywoky.com/api/v2/brandcategories/{self.category_id}/{endpoint}")
+        try:
+            print(json.dumps(r.json(), indent=4))
+        except json.JSONDecodeError:
+            print("Endpoint returned no data or is invalid.")
+
+    def request_brandcategory_endpoint(self, endpoint):
+        return requests.get(f"https://www.tokywoky.com/api/v2/brandcategories/{self.category_id}/{endpoint}")
 
 
 def get_tokys(start, end, debug=False):
@@ -42,6 +72,12 @@ def get_tokys(start, end, debug=False):
             print(f"Got {n} with code {r.status_code}")
         tokys.append(toky(n, f"https://www.tokywoky.com/webview/v4/{n}", r))
     return tokys
+
+
+def get_toky(link_id):
+    return toky(link_id,
+                f"https://www.tokywoky.com/webview/v4/{link_id}",
+                requests.get(f"https://www.tokywoky.com/webview/v4/{link_id}"))
 
 
 def clean_by_response_code(tokys):
@@ -120,7 +156,7 @@ def populate_all(tokys, debug=False):
         toky.populate_questions()
 
 
-if __name__ == "__main__" and True:
+def make_link_lists():
     ts = get_tokys(0, 600, debug=True)
     print(f"Unclean: {[t.link_id for t in ts]}")
     clean_by_response_code(ts)
@@ -132,6 +168,29 @@ if __name__ == "__main__" and True:
     print(f"\n ----------------safe----------------- \n{export_links(convert_to_links(st), 'tokys_safe.txt')}")
     close_all_responses(ts)
 
+
+if __name__ == "__main__" and True:
+    # t = get_toky(131)
+    # t.populate_group_info()
+    # t.populate_questions()
+    # print(t.category_id)
+    # print(t.request_brandcategory_endpoint("questions?limit=5").json().__len__())
+    A = account("cookie")
+    r = A.request_with_account("https://www.tokywoky.com/api/v2/brandcategories/101/questions?last=true")
+    print(r.json())
+
     # some api stuff
     # questions, customerServiceKeywords, chats(accepts a query), emojis, users
     # users has a page me(users/me)
+
+    # brandcategory: the brand/category owned by some company a "toky" basically
+    ## questions: the list of available questions(last=true, limit?, offset?)
+    ## users: list of users, cannot view
+    ### users/me: logged in user
+    ## questionSkipped: access to goto next question
+    ## chats: mesages started by an answer(filter=(unread|???), isBrandRestricted=true)
+    # signalr: telemetry?
+    ## ping: I guess a heartbeat to check for new data?
+    ## negotiate: get a connection token (clientProtocol=1.5, connectionData=[{"name"%3A"publichub"}])
+    ## abort: end a connection (transport=webSockets, clientProtocol=1.5, connectionToken=token, connectionData=[{"name"%3A"publichub"}])
+    ## start: start a connection (transport=webSockets, clientProtocol=1.5, connectionToken=token, connectionData=[{"name"%3A"publichub"}])
