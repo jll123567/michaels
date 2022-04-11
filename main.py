@@ -1,9 +1,10 @@
 import requests
 import re
 import webbrowser
-import copy
 import json
 from dataclasses import dataclass, field
+
+
 class account:
     def __init__(self, cookie=""):
         self.cookie = cookie
@@ -23,6 +24,7 @@ class account:
 
     def request_with_account(self, endpoint):
         return requests.get(url=endpoint, headers=self.headers)
+
 
 @dataclass
 class toky:
